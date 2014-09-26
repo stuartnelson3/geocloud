@@ -11,12 +11,27 @@ import (
 	"strconv"
 )
 
+func querySoundcloud(id int, out chan<- Track) {
+	resp, err := http.Get(fmt.Sprintf("http://api.soundcloud.com/tracks/%d.json?client_id=1182e08b0415d770cfb0219e80c839e8", id))
+	if err != nil {
+		log.Printf("Failed to GET %d", id)
+		return
+	}
+	defer resp.Body.Close()
+	t := Track{}
+	err = json.NewDecoder(resp.Body).Decode(&t)
+	if err != nil {
+		log.Println(err)
+	}
+	out <- t
+}
+
 func main() {
 	// http://ip-api.com/json/[ip]
 	// obj["zip"]
 
-	// http://maps.googleapis.com/maps/api/geocode/json?address=77379
-	// obj["results"][0]["address_components"][3]["long_name"]
+	// http://zip.getziptastic.com/v2/US/48867
+	// obj["state"]
 
 	// ips := make([]byte, 10)
 	// for i := 0; i < len(ips); i++ {
@@ -29,23 +44,11 @@ func main() {
 	ids := []int{151370911, 97542154, 104449478, 7910262}
 	out := make(chan Track)
 	for i := 0; i < len(ids); i++ {
-		go func(id int) {
-			resp, err := http.Get(fmt.Sprintf("http://api.soundcloud.com/tracks/%d.json?client_id=1182e08b0415d770cfb0219e80c839e8", id))
-			if err != nil {
-				log.Printf("Failed to GET %d", id)
-				return
-			}
-			defer resp.Body.Close()
-			t := Track{}
-			err = json.NewDecoder(resp.Body).Decode(&t)
-			if err != nil {
-				log.Println(err)
-			}
-			out <- t
-		}(ids[i])
+		go querySoundcloud(ids[i], out)
 	}
 
 	tracks := make([]Track, len(ids))
+	// need to account for failed network requests somehow.
 	for i := 0; i < len(ids); i++ {
 		tracks[i] = <-out
 	}
