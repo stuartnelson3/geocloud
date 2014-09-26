@@ -32,26 +32,10 @@ func querySoundcloud(id, state string, out chan<- Track) {
 func apiQuerier(initialRow chan []string, out chan Track) {
 	for r := range initialRow {
 		querySoundcloud(r[1], r[0], out)
-		// <-time.After(time.Second)
 	}
 }
 
 func main() {
-	// id := "97542154"
-	// url := fmt.Sprintf("http://api.soundcloud.com/tracks/%s.json?client_id=1182e08b0415d770cfb0219e80c839e8", id)
-	// fmt.Println(url)
-	// resp, err := http.Get(url)
-	// if err != nil {
-	// 	log.Printf("Failed to GET %s", id)
-	// 	return
-	// }
-	// defer resp.Body.Close()
-	// t := Track{
-	// 	USState: "Minnesota",
-	// }
-	// err = json.NewDecoder(resp.Body).Decode(&t)
-	// fmt.Println(t)
-	// return
 	// http://ip-api.com/json/[ip]
 	// obj["zip"]
 
@@ -70,8 +54,8 @@ func main() {
 		log.Println("Error reading header: ", err)
 		return
 	}
-	// state, track_id, playcount, title, link, artwork
-	header = append(header, []string{"playcount", "title", "link", "artwork"}...)
+	// state, track_id, playcount, title, link, artwork, count
+	header = append(header, []string{"playcount", "title", "link", "artwork", "count"}...)
 
 	body, err := csvF.ReadAll()
 	if err != nil {
@@ -89,7 +73,6 @@ func main() {
 			log.Printf("Row %d", i)
 			initialRow <- row
 		}
-		// close(initialRow)
 	}()
 
 	tracks := make([]Track, 0)
@@ -109,10 +92,47 @@ func main() {
 		}
 	}
 
-	data := make([][]string, len(tracks))
-	for i := 0; i < len(tracks); i++ {
-		t := tracks[i]
-		data[i] = []string{t.USState, strconv.Itoa(t.Id), strconv.Itoa(t.PlaybackCount), t.Title, t.PermalinkUrl, t.ArtworkUrl}
+	// filter tracks to state
+	stateMap := make(map[string][]Track)
+	for _, t := range tracks {
+		stateMap[t.USState] = append(stateMap[t.USState], t)
+	}
+	// now with the states: sum the occurrence of each track
+	trax := make([]Track, 50)
+	plc := 0
+	for _, trks := range stateMap {
+		songMap := make(map[string]int)
+		count := 0
+		var track Track
+		for _, t := range trks {
+			_, prs := songMap[t.Title]
+			if prs {
+				songMap[t.Title] = songMap[t.Title] + 1
+			} else {
+				songMap[t.Title] = 1
+			}
+			if songMap[t.Title] > count {
+				count = songMap[t.Title]
+				track = t
+			}
+		}
+		track.Count = count
+		trax[plc] = track
+		plc++
+	}
+
+	data := make([][]string, len(trax))
+	for i, _ := range data {
+		t := trax[i]
+		data[i] = []string{
+			t.USState,
+			strconv.Itoa(t.Id),
+			strconv.Itoa(t.PlaybackCount),
+			t.Title,
+			t.PermalinkUrl,
+			t.ArtworkUrl,
+			strconv.Itoa(t.Count),
+		}
 	}
 	newCSV, err := os.Create("./random_state_data.csv")
 	if err != nil {
@@ -139,5 +159,6 @@ type Track struct {
 	Title         string `json:"title"`
 	PermalinkUrl  string `json:"permalink_url"`
 	ArtworkUrl    string `json:"artwork_url"`
-	USState       string
+	USState       string `json:"us_state"`
+	Count         int    `json:"count"`
 }

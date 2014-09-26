@@ -25,7 +25,7 @@ window.onload = function() {
   .html(function(d) {
     var p = d.properties;
     if (p.artwork) {
-      return img(p.artwork, p.link) + "<div>" + p.title + ": " + p["playcount"] + " plays.</div>";
+      return img(p.artwork, p.link) + "<div>" + p.title + ": " + p.playcount + " plays.</div>";
     } else {
       return "<div>No data found</div>";
     }
@@ -51,8 +51,8 @@ window.onload = function() {
   d3.csv("random_state_data.csv", function(data) {
 
     color.domain([
-      d3.min(data, function(d) { return +d.playcount; }),
-      d3.max(data, function(d) { return +d.playcount; })
+      d3.min(data, function(d) { return +d.count; }),
+      d3.max(data, function(d) { return +d.count; })
     ]);
 
     d3.json("us-states.json", function(json) {
@@ -82,9 +82,9 @@ window.onload = function() {
       .append("path")
       .attr("d", path)
       .style("fill", function(d) {
-        var value = d.properties.playcount;
-        if (value) {
-          return color(value);
+        var count = d.properties.count;
+        if (count) {
+          return color(count);
         } else {
           return "#ccc";
         }
