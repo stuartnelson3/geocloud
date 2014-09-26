@@ -36,7 +36,6 @@ window.onload = function() {
 
   //Define map projection
   var projection = d3.geo.albersUsa()
-  // .translate([w/2, h/2])
   .translate([360, 200])
   .scale([800]);
 

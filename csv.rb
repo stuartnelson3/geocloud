@@ -2,7 +2,7 @@ require 'csv'
 require 'open-uri'
 require 'json'
 
-ids = [151370911, 97542154]
+ids = [151370911, 97542154, 104449478, 7910262]
 
 json = ids.map do |id|
   puts "requesting #{id}"
