@@ -64,7 +64,7 @@ func main() {
 		log.Println("Error reading header: ", err)
 		return
 	}
-	header = append(header, []string{"Playback count", "Title", "Link", "Artwork"}...)
+	header = append(header, []string{"playcount", "title", "link", "artwork"}...)
 
 	body, err := csvF.ReadAll()
 	if err != nil {

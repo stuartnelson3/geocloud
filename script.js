@@ -25,10 +25,9 @@ window.onload = function() {
   .offset([0, -10])
   .direction("e")
   .html(function(d) {
-    // state,value,Playback count,Title,Link,Artwork
     var p = d.properties;
-    if (p.Artwork) {
-      return img(p.Artwork, p.Link) + "<div>" + p.Title + ": " + p["Playback count"] + " plays.</div>";
+    if (p.artwork) {
+      return img(p.artwork, p.link) + "<div>" + p.title + ": " + p["playcount"] + " plays.</div>";
     } else {
       return "<div>No data found</div>";
     }
@@ -116,10 +115,6 @@ window.onload = function() {
           return "#ccc";
         }
       })
-      // try embedding sc widgets in d3.tip a la http://bl.ocks.org/Caged/6476579
-      // try to get them to play and all that nice stuff.
-      // .on('mouseover', tip.show)
-      // .on('mouseout', tip.hide)
       .on("mouseover", function(d) {
         tip.show(d)
       })
