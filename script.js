@@ -57,7 +57,7 @@ window.onload = function() {
   svg.call(tip);
 
   //Load in agriculture data
-  d3.csv("music_data.csv", function(data) {
+  d3.csv("golang_music_data.csv", function(data) {
 
     //Set input domain for color scale
     color.domain([
