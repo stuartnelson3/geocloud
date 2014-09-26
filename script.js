@@ -6,12 +6,18 @@ window.onload = function() {
   function iframe(url) {
     return "<iframe width='100%' height='200' scrolling='no' frameborder='no' src='" + url + "'></iframe>"
   }
-  function img(url) {
-    return "<img src='" + url + "'/>";
+  function img(imgUrl, linkUrl) {
+    return "<img class='album-art' src='" + imgUrl + "' data-url='" + linkUrl + "' />";
   }
 
   $(document).on("mouseout", ".d3-tip", function() {
     tip.hide()
+  });
+  $(document).on("click", ".album-art", function() {
+    SC.oEmbed(this.dataset.url, {auto_play: true}, function(oembed){
+      var container = document.querySelector(".play-container");
+      container.innerHTML = oembed.html;
+    });
   });
 
   var tip = d3.tip()
@@ -19,8 +25,10 @@ window.onload = function() {
   .offset([0, -10])
   .direction("e")
   .html(function(d) {
-    if (d.properties.url) {
-      return iframe(d.properties.url);
+    // state,value,Playback count,Title,Link,Artwork
+    var p = d.properties;
+    if (p.Artwork) {
+      return img(p.Artwork, p.Link) + "<div>" + p.Title + ": " + p["Playback count"] + " plays.</div>";
     } else {
       return "<div>No data found</div>";
     }

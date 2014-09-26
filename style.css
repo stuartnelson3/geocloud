@@ -1,3 +1,8 @@
 .svg-container, .play-container {
   margin: 40px;
 }
+
+.d3-tip {
+  background: #fff;
+  border: 1px solid #ccc;
+}
