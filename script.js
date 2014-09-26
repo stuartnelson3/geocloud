@@ -2,8 +2,12 @@ window.onload = function() {
   var w = window.innerWidth;
   var h = window.innerHeight;
   var url = "https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/97542154&amp;auto_play=false&amp;hide_related=false&amp;show_comments=true&amp;show_user=true&amp;show_reposts=false&amp;visual=true";
+  var id = 97542154;
   function iframe(url) {
     return "<iframe width='100%' height='200' scrolling='no' frameborder='no' src='" + url + "'></iframe>"
+  }
+  function img(url) {
+    return "<img src='" + url + "'/>";
   }
 
   $(document).on("mouseout", ".d3-tip", function() {
@@ -12,10 +16,14 @@ window.onload = function() {
 
   var tip = d3.tip()
   .attr('class', 'd3-tip')
-  .offset([0, 0])
+  .offset([0, -10])
   .direction("e")
   .html(function(d) {
-    return iframe(d.properties.url);
+    if (d.properties.url) {
+      return iframe(d.properties.url);
+    } else {
+      return "<div>No data found</div>";
+    }
   });
 
   //Define map projection
@@ -34,7 +42,7 @@ window.onload = function() {
   //Colors taken from colorbrewer.js, included in the D3 download
 
   //Create SVG element
-  var svg = d3.select("body")
+  var svg = d3.select(".svg-container")
   .append("svg")
   .attr("width", 720)
   .attr("height", 400);
@@ -42,7 +50,7 @@ window.onload = function() {
   svg.call(tip);
 
   //Load in agriculture data
-  d3.csv("us-ag-productivity-2004.csv", function(data) {
+  d3.csv("music_data.csv", function(data) {
 
     //Set input domain for color scale
     color.domain([
@@ -61,7 +69,6 @@ window.onload = function() {
         var dataState = data[i].state;
 
         //Grab data value, and convert from string to float
-        var dataValue = parseFloat(data[i].value);
 
         //Find the corresponding state inside the GeoJSON
         for (var j = 0; j < json.features.length; j++) {
@@ -71,9 +78,11 @@ window.onload = function() {
           if (dataState == jsonState) {
 
             //Copy the data value into the JSON
-            var state = json.features[j];
-            state.properties.value = dataValue;
-            state.properties.url = url;
+            var props = json.features[j].properties;
+            for (var k in data[i]) {
+              props[k] = data[i][k];
+            }
+            props.value = parseFloat(props.value);
 
             //Stop looking through the JSON
             break;
