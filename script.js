@@ -5,12 +5,9 @@ window.onload = function() {
     return "<iframe width='100%' height='200' scrolling='no' frameborder='no' src='" + url + "'></iframe>"
   }
   function img(imgUrl, linkUrl) {
-    return "<img class='album-art' src='" + imgUrl + "' data-url='" + linkUrl + "' />";
+    return "<img class='album-art pointer' src='" + imgUrl + "' data-url='" + linkUrl + "' />";
   }
 
-  $(document).on("mouseout", ".d3-tip", function() {
-    tip.hide()
-  });
   $(document).on("click", ".album-art", function() {
     SC.oEmbed(this.dataset.url, {auto_play: true}, function(oembed){
       var container = document.querySelector(".play-container");
@@ -29,8 +26,8 @@ window.onload = function() {
     return d.properties.tracks.slice(0,3).map(function(t) {
       if (t.artwork_url) {
         return "<div class='album-container'>" + img(t.artwork_url, t.permalink_url) +
-          "<div class='album-description'>" + t.title + "</div>" +
-          "<div class='album-description'>" + t.count + " plays</div>" +
+          // "<div class='album-description'>" + t.title + "</div>" +
+          // "<div class='album-description'>" + t.count + " plays</div>" +
           "</div>";
       } else {
         return "<div>No data found</div>";
@@ -107,30 +104,41 @@ window.onload = function() {
         }
       }
 
-      svg.selectAll("path")
-      .data(json.features)
-      .enter()
+      var paths = svg.selectAll("path")
+      .data(json.features);
+
+      paths.enter()
       .append("path")
       .attr("d", path)
-      .style("fill", function(d) {
-        var total_plays = d.properties.total_plays;
-        if (total_plays) {
-          return color(total_plays);
-        } else {
-          return "#ccc";
-        }
-      })
+      .style("fill", setFill)
       .on("mouseover", function(d) {
+        d3.select(this).style("fill", "rgb(204, 68, 0)");
         tip.show(d)
       })
       .on("mouseout", function(d) {
         if ($(".d3-tip").is(":hover")) {
           return;
         } else {
+        d3.select(this).style("fill", setFill);
           tip.hide(d)
           return;
         }
       });
+
+      $(document).on("mouseleave", ".d3-tip", function() {
+        tip.hide()
+        paths.style("fill", setFill);
+      });
+
+      function setFill(d) {
+        var total_plays = d.properties.total_plays;
+        if (total_plays) {
+          return color(total_plays);
+        } else {
+          return "#ccc";
+        }
+      }
+
     });
   });
 }

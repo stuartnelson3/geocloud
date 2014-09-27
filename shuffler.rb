@@ -41,3 +41,4 @@ CSV.open("./state_seed.csv", "wb") do |csv|
   csv << ["state", "track_id"]
   new_data.each {|d| csv << d }
 end
+puts "done"
