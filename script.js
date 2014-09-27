@@ -23,12 +23,14 @@ window.onload = function() {
   .offset([0, -10])
   .direction("e")
   .html(function(d) {
-    var p = d.properties.tracks[0];
-    if (p.artwork_url) {
-      return img(p.artwork_url, p.permalink_url) + "<div>" + p.title + ": " + p.count + " plays.</div>";
-    } else {
-      return "<div>No data found</div>";
-    }
+    if (!d.properties.tracks) return
+    return d.properties.tracks.map(function(t) {
+      if (t.artwork_url) {
+        return img(t.artwork_url, t.permalink_url) + "<div>" + t.title + ": " + t.count + " plays.</div>";
+      } else {
+        return "<div>No data found</div>";
+      }
+    });
   });
 
   var projection = d3.geo.albersUsa()
@@ -67,7 +69,7 @@ window.onload = function() {
     .style("background-color", function(d) { return d; })
     .append("text")
     .text(function(d) {
-      return color.invertExtent(d).join("-");
+      return color.invertExtent(d).map(function(n) { return Math.round(n*100)/100; }).join("-");
     })
 
     d3.json("us-states.json", function(json) {
