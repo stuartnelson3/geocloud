@@ -10,10 +10,10 @@ ids = [151370911, 97542154, 104449478, 7910262]
 new_data = []
 data.each do |d|
   num = rand(10) + 1
-  puts "appending #{num} #{d[0]}s"
   num.times do
     # give them some random ids
-    new_data << [d[0], ids[num % 4]]
+    a = [d[0], ids[(rand(10) + 1) % 4]]
+    new_data << a
   end
 end
 
