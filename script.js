@@ -31,7 +31,7 @@ window.onload = function() {
       } else {
         return "<div>No data found</div>";
       }
-    });
+    }).join("");
   });
 
   var projection = d3.geo.albersUsa()
