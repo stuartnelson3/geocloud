@@ -23,9 +23,9 @@ window.onload = function() {
   .offset([0, -10])
   .direction("e")
   .html(function(d) {
-    var p = d.properties;
-    if (p.artwork) {
-      return img(p.artwork, p.link) + "<div>" + p.title + ": " + p.playcount + " plays.</div>";
+    var p = d.properties.tracks[0];
+    if (p.artwork_url) {
+      return img(p.artwork_url, p.permalink_url) + "<div>" + p.title + ": " + p.count + " plays.</div>";
     } else {
       return "<div>No data found</div>";
     }
@@ -45,14 +45,15 @@ window.onload = function() {
 
   svg.call(tip);
 
-  d3.csv("random_state_data.csv", function(data) {
+  // d3.csv("random_state_data.csv", function(data) {
+  d3.json("states.json", function(data) {
 
     var colorScale = ["rgb(237,248,233)","rgb(186,228,179)","rgb(116,196,118)","rgb(49,163,84)","rgb(0,109,44)"];
 
     var color = d3.scale.quantize()
     .range(colorScale).domain([
-      d3.min(data, function(d) { return +d.count; }),
-      d3.max(data, function(d) { return +d.count; })
+      d3.min(data, function(d) { return d.total_plays; }),
+      d3.max(data, function(d) { return d.total_plays; })
     ]);
 
     d3.select(".legend-container")
@@ -74,14 +75,11 @@ window.onload = function() {
     d3.json("us-states.json", function(json) {
 
       for (var i = 0; i < data.length; i++) {
-        var dataState = data[i].state;
+        var dataState = data[i].name;
         for (var j = 0; j < json.features.length; j++) {
           var jsonState = json.features[j].properties.name;
 
           if (dataState == jsonState) {
-            data[i].track_id = parseInt(data[i].track_id, 10)
-            data[i].playcount = parseInt(data[i].playcount, 10)
-
             var props = json.features[j].properties;
             for (var k in data[i]) {
               props[k] = data[i][k];
@@ -98,9 +96,9 @@ window.onload = function() {
       .append("path")
       .attr("d", path)
       .style("fill", function(d) {
-        var count = d.properties.count;
-        if (count) {
-          return color(count);
+        var total_plays = d.properties.total_plays;
+        if (total_plays) {
+          return color(total_plays);
         } else {
           return "#ccc";
         }

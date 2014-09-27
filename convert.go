@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 	"time"
 )
 
@@ -73,6 +72,7 @@ func main() {
 			log.Printf("Row %d", i)
 			initialRow <- row
 		}
+		// close(initialRow)
 	}()
 
 	tracks := make([]Track, 0)
@@ -83,7 +83,7 @@ func main() {
 		case t := <-out:
 			log.Println("Appending", t.USState)
 			tracks = append(tracks, t)
-		case <-time.After(time.Second * 10):
+		case <-time.After(time.Second * 3):
 			log.Println("Timeout, continuing")
 			quit = true
 		}
@@ -98,9 +98,9 @@ func main() {
 		stateMap[t.USState] = append(stateMap[t.USState], t)
 	}
 	// now with the states: sum the occurrence of each track
-	trax := make([]Track, 50)
-	plc := 0
-	for _, trks := range stateMap {
+	// trax := make([]Track, 50)
+	// plc := 0
+	for state, trks := range stateMap {
 		songMap := make(map[string]int)
 		count := 0
 		var track Track
@@ -117,40 +117,70 @@ func main() {
 			}
 		}
 		track.Count = count
-		trax[plc] = track
-		plc++
+		stateMap[state] = []Track{track}
+		// trax[plc] = track
+		// plc++
 	}
 
-	data := make([][]string, len(trax))
-	for i, _ := range data {
-		t := trax[i]
-		data[i] = []string{
-			t.USState,
-			strconv.Itoa(t.Id),
-			strconv.Itoa(t.PlaybackCount),
-			t.Title,
-			t.PermalinkUrl,
-			t.ArtworkUrl,
-			strconv.Itoa(t.Count),
+	stateJson := make([]State, len(stateMap))
+	var i int
+	for name, tracks := range stateMap {
+		var sum int
+		for _, t := range tracks {
+			sum += t.Count
 		}
-	}
-	newCSV, err := os.Create("./random_state_data.csv")
-	if err != nil {
-		log.Println("Error creating new CSV file: ", err)
-		return
+		stateJson[i] = State{
+			Name:       name,
+			TotalPlays: sum,
+			Tracks:     tracks,
+		}
+		i++
 	}
 
-	w := csv.NewWriter(newCSV)
-	err = w.Write(header)
+	jf, err := os.Create("./states.json")
 	if err != nil {
-		log.Println("Error writing header to new CSV file: ", err)
+		log.Println("Error making json file:", err)
 		return
 	}
-	err = w.WriteAll(data)
-	if err != nil {
-		log.Println("Error writing body to new CSV file: ", err)
-		return
-	}
+	defer jf.Close()
+	json.NewEncoder(jf).Encode(stateJson)
+
+	// data := make([][]string, len(trax))
+	// for i, _ := range data {
+	// 	t := trax[i]
+	// 	data[i] = []string{
+	// 		t.USState,
+	// 		strconv.Itoa(t.Id),
+	// 		strconv.Itoa(t.PlaybackCount),
+	// 		t.Title,
+	// 		t.PermalinkUrl,
+	// 		t.ArtworkUrl,
+	// 		strconv.Itoa(t.Count),
+	// 	}
+	// }
+	// newCSV, err := os.Create("./random_state_data.csv")
+	// if err != nil {
+	// 	log.Println("Error creating new CSV file: ", err)
+	// 	return
+	// }
+	//
+	// w := csv.NewWriter(newCSV)
+	// err = w.Write(header)
+	// if err != nil {
+	// 	log.Println("Error writing header to new CSV file: ", err)
+	// 	return
+	// }
+	// err = w.WriteAll(data)
+	// if err != nil {
+	// 	log.Println("Error writing body to new CSV file: ", err)
+	// 	return
+	// }
+}
+
+type State struct {
+	Name       string  `json:"name"`
+	TotalPlays int     `json:"total_plays"`
+	Tracks     []Track `json:"tracks"`
 }
 
 type Track struct {
