@@ -38,9 +38,6 @@ window.onload = function() {
   var path = d3.geo.path()
   .projection(projection);
 
-  var color = d3.scale.quantize()
-  .range(["rgb(237,248,233)","rgb(186,228,179)","rgb(116,196,118)","rgb(49,163,84)","rgb(0,109,44)"]);
-
   var svg = d3.select(".svg-container")
   .append("svg")
   .attr("width", 720)
@@ -50,10 +47,29 @@ window.onload = function() {
 
   d3.csv("random_state_data.csv", function(data) {
 
-    color.domain([
+    var colorScale = ["rgb(237,248,233)","rgb(186,228,179)","rgb(116,196,118)","rgb(49,163,84)","rgb(0,109,44)"];
+
+    var color = d3.scale.quantize()
+    .range(colorScale).domain([
       d3.min(data, function(d) { return +d.count; }),
       d3.max(data, function(d) { return +d.count; })
     ]);
+
+    d3.select(".legend-container")
+    .selectAll(".palette")
+    .data([colorScale])
+    .enter().append("span")
+    .attr("class", "palette")
+    .attr("title", function(d) { return d.key; })
+    .selectAll(".swatch")
+    .data(function(d) { return colorScale; })
+    .enter().append("span")
+    .attr("class", "swatch")
+    .style("background-color", function(d) { return d; })
+    .append("text")
+    .text(function(d) {
+      return color.invertExtent(d).join("-");
+    })
 
     d3.json("us-states.json", function(json) {
 

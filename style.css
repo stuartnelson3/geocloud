@@ -2,7 +2,38 @@
   margin: 40px;
 }
 
+.legend-container {
+  position: absolute;
+  top: 50px;
+  left: 30px;
+}
+
 .d3-tip {
   background: #fff;
   border: 1px solid #ccc;
 }
+
+.palette {
+  cursor: pointer;
+  display: inline-block;
+  vertical-align: bottom;
+  margin: 4px 0 4px 6px;
+  padding: 4px;
+  background: #fff;
+  border: solid 1px #aaa;
+}
+
+.swatch {
+  display: block;
+  height: 22px;
+  text-align: center;
+  vertical-align: middle;
+  width: 37px;
+}
+
+.legend-container text {
+  color: #fff;
+  font-size: 10px;
+  font-family: Avenir, Helvetica;
+}
+
