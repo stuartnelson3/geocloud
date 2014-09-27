@@ -98,28 +98,22 @@ func main() {
 		stateMap[t.USState] = append(stateMap[t.USState], t)
 	}
 	// now with the states: sum the occurrence of each track
-	// trax := make([]Track, 50)
-	// plc := 0
 	for state, trks := range stateMap {
-		songMap := make(map[string]int)
-		count := 0
-		var track Track
+		songMap := make(map[string]Track)
 		for _, t := range trks {
-			_, prs := songMap[t.Title]
+			track, prs := songMap[t.Title]
 			if prs {
-				songMap[t.Title] = songMap[t.Title] + 1
+				track.Count++
+				songMap[t.Title] = track
 			} else {
-				songMap[t.Title] = 1
-			}
-			if songMap[t.Title] > count {
-				count = songMap[t.Title]
-				track = t
+				t.Count = 1
+				songMap[t.Title] = t
 			}
 		}
-		track.Count = count
-		stateMap[state] = []Track{track}
-		// trax[plc] = track
-		// plc++
+		stateMap[state] = make([]Track, 0)
+		for _, t := range songMap {
+			stateMap[state] = append(stateMap[state], t)
+		}
 	}
 
 	stateJson := make([]State, len(stateMap))
