@@ -24,9 +24,10 @@ window.onload = function() {
   .direction("e")
   .html(function(d) {
     if (!d.properties.tracks) return
-    return d.properties.tracks.map(function(t) {
+    return d.properties.tracks.slice(0,3).map(function(t) {
       if (t.artwork_url) {
-        return img(t.artwork_url, t.permalink_url) + "<div>" + t.title + ": " + t.count + " plays.</div>";
+        return img(t.artwork_url, t.permalink_url) +
+          "<div>" + t.title + ": " + t.count + " plays.</div>";
       } else {
         return "<div>No data found</div>";
       }
@@ -48,6 +49,18 @@ window.onload = function() {
   svg.call(tip);
 
   d3.json("states.json", function(data) {
+    data.forEach(function(state) {
+      state.tracks.sort(function compare(a, b) {
+        if (a.count < b.count) {
+          return 1;
+        }
+        if (a.count > b.count) {
+          return -1;
+        }
+        return 0;
+      });
+    });
+
     var colorScale = ["rgb(237,248,233)","rgb(186,228,179)","rgb(116,196,118)","rgb(49,163,84)","rgb(0,109,44)"];
 
     var color = d3.scale.quantize()
