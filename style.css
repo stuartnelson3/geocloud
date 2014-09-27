@@ -1,3 +1,8 @@
+body {
+  font-family: Avenir, Helvetica;
+  font-size: 14px;
+}
+
 .svg-container, .play-container {
   margin: 40px;
 }
@@ -11,6 +16,8 @@
 .d3-tip {
   background: #fff;
   border: 1px solid #ccc;
+  padding: 10px;
+  width: 400px;
 }
 
 .palette {
@@ -34,6 +41,23 @@
 .legend-container text {
   color: #fff;
   font-size: 10px;
-  font-family: Avenir, Helvetica;
 }
 
+.album-container {
+  height: 100px;
+  margin-bottom: 10px;
+}
+
+.album-container:last-child {
+  margin-bottom: 0;
+}
+
+.album-art {
+  float: left;
+  margin-right: 10px;
+}
+
+.album-description {
+  display: inline-block;
+  width: 270px;
+}

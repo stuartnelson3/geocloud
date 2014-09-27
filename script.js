@@ -23,11 +23,15 @@ window.onload = function() {
   .offset([0, -10])
   .direction("e")
   .html(function(d) {
-    if (!d.properties.tracks) return
+    if (!d.properties.tracks) {
+      return "<div class='album-description'>No track data :(</div>";
+    }
     return d.properties.tracks.slice(0,3).map(function(t) {
       if (t.artwork_url) {
-        return img(t.artwork_url, t.permalink_url) +
-          "<div>" + t.title + ": " + t.count + " plays.</div>";
+        return "<div class='album-container'>" + img(t.artwork_url, t.permalink_url) +
+          "<div class='album-description'>" + t.title + "</div>" +
+          "<div class='album-description'>" + t.count + " plays</div>" +
+          "</div>";
       } else {
         return "<div>No data found</div>";
       }
