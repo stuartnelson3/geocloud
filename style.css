@@ -7,6 +7,24 @@ body {
   margin: 40px;
 }
 
+.svg-container, .state-data-container {
+  display: inline-block;
+}
+
+.state-data-container {
+  border: 1px solid #ccc;
+  height: 400px;
+  position: absolute;
+  top: 50px;
+  width: 400px;
+}
+
+.state-name {
+  font-size: 18px;
+  margin: 10px;
+  text-decoration: underline;
+}
+
 .legend-container {
   position: absolute;
   top: 50px;
@@ -25,7 +43,7 @@ body {
   margin: 4px 0 4px 6px;
   padding: 4px;
   background: #fff;
-  border: solid 1px #aaa;
+  border: solid 1px #ccc;
 }
 
 .swatch {

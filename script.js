@@ -5,10 +5,10 @@ window.onload = function() {
     return "<iframe width='100%' height='200' scrolling='no' frameborder='no' src='" + url + "'></iframe>"
   }
   function img(imgUrl, linkUrl) {
-    return "<img class='album-art pointer' src='" + imgUrl + "' data-url='" + linkUrl + "' />";
+    return "<img class='album-art embed-link pointer' src='" + imgUrl + "' data-url='" + linkUrl + "' />";
   }
 
-  $(document).on("click", ".album-art", function() {
+  $(document).on("click", ".embed-link", function() {
     SC.oEmbed(this.dataset.url, {auto_play: true}, function(oembed){
       var container = document.querySelector(".play-container");
       container.innerHTML = oembed.html;
@@ -111,6 +111,9 @@ window.onload = function() {
       .append("path")
       .attr("d", path)
       .style("fill", setFill)
+      .on("click", function(d) {
+        appendStateContainer(d);
+      })
       .on("mouseover", function(d) {
         d3.select(this).style("fill", "rgb(204, 68, 0)");
         tip.show(d)
@@ -137,6 +140,25 @@ window.onload = function() {
         } else {
           return "#ccc";
         }
+      }
+
+      function appendStateContainer(d) {
+        var s = d.properties;
+        var el = document.querySelector(".state-data-container");
+        var markup = ""
+        markup = "<div class='state-name'>" + s.name + "</div>";
+        markup += "<ol class='tracks'>";
+        s.tracks.forEach(function(t) {
+          markup += "<li class='track'>";
+          markup += trackMarkup(t);
+          markup += "</li>";
+        });
+        markup += "</ol>";
+        el.innerHTML = markup;
+      }
+
+      function trackMarkup(t) {
+        return "<span class='embed-link pointer' data-url='" + t.permalink_url + "'>" + t.title + "</span>";
       }
 
     });
