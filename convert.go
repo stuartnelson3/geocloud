@@ -34,6 +34,65 @@ func apiQuerier(initialRow chan []string, out chan Track) {
 	}
 }
 
+func readOut(out <-chan Track) []Track {
+	tracks := make([]Track, 0)
+	timeout := time.After(time.Second * 10)
+	for {
+		select {
+		case t := <-out:
+			log.Println("Appending", t.USState)
+			tracks = append(tracks, t)
+		case <-timeout:
+			log.Println("Timeout, continuing")
+			return tracks
+		}
+	}
+}
+
+func tracksByState(tracks []Track) map[string][]Track {
+	stateMap := make(map[string][]Track)
+	for _, t := range tracks {
+		stateMap[t.USState] = append(stateMap[t.USState], t)
+	}
+	// now with the states: sum the occurrence of each track
+	for state, trks := range stateMap {
+		songMap := make(map[string]Track)
+		for _, t := range trks {
+			track, prs := songMap[t.Title]
+			if prs {
+				track.Count++
+				songMap[t.Title] = track
+			} else {
+				t.Count = 1
+				songMap[t.Title] = t
+			}
+		}
+		stateMap[state] = make([]Track, 0)
+		for _, t := range songMap {
+			stateMap[state] = append(stateMap[state], t)
+		}
+	}
+	return stateMap
+}
+
+func stateJson(stateMap map[string][]Track) []State {
+	data := make([]State, len(stateMap))
+	var i int
+	for name, tracks := range stateMap {
+		var sum int
+		for _, t := range tracks {
+			sum += t.Count
+		}
+		data[i] = State{
+			Name:       name,
+			TotalPlays: sum,
+			Tracks:     tracks,
+		}
+		i++
+	}
+	return data
+}
+
 func main() {
 	// http://ip-api.com/json/[ip]
 	// obj["zip"]
@@ -64,72 +123,17 @@ func main() {
 
 	initialRow := make(chan []string)
 	out := make(chan Track)
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 100; i++ {
 		go apiQuerier(initialRow, out)
 	}
 	go func() {
-		for i, row := range body {
-			log.Printf("Row %d", i)
+		for _, row := range body {
 			initialRow <- row
 		}
-		// close(initialRow)
 	}()
 
-	tracks := make([]Track, 0)
-	// need to account for failed network requests somehow.
-	for {
-		var quit bool
-		select {
-		case t := <-out:
-			log.Println("Appending", t.USState)
-			tracks = append(tracks, t)
-		case <-time.After(time.Second * 3):
-			log.Println("Timeout, continuing")
-			quit = true
-		}
-		if quit {
-			break
-		}
-	}
-
-	// filter tracks to state
-	stateMap := make(map[string][]Track)
-	for _, t := range tracks {
-		stateMap[t.USState] = append(stateMap[t.USState], t)
-	}
-	// now with the states: sum the occurrence of each track
-	for state, trks := range stateMap {
-		songMap := make(map[string]Track)
-		for _, t := range trks {
-			track, prs := songMap[t.Title]
-			if prs {
-				track.Count++
-				songMap[t.Title] = track
-			} else {
-				t.Count = 1
-				songMap[t.Title] = t
-			}
-		}
-		stateMap[state] = make([]Track, 0)
-		for _, t := range songMap {
-			stateMap[state] = append(stateMap[state], t)
-		}
-	}
-
-	stateJson := make([]State, len(stateMap))
-	var i int
-	for name, tracks := range stateMap {
-		var sum int
-		for _, t := range tracks {
-			sum += t.Count
-		}
-		stateJson[i] = State{
-			Name:       name,
-			TotalPlays: sum,
-			Tracks:     tracks,
-		}
-		i++
-	}
+	tracks := readOut(out)
+	stateMap := tracksByState(tracks)
 
 	jf, err := os.Create("./states.json")
 	if err != nil {
@@ -137,38 +141,7 @@ func main() {
 		return
 	}
 	defer jf.Close()
-	json.NewEncoder(jf).Encode(stateJson)
-
-	// data := make([][]string, len(trax))
-	// for i, _ := range data {
-	// 	t := trax[i]
-	// 	data[i] = []string{
-	// 		t.USState,
-	// 		strconv.Itoa(t.Id),
-	// 		strconv.Itoa(t.PlaybackCount),
-	// 		t.Title,
-	// 		t.PermalinkUrl,
-	// 		t.ArtworkUrl,
-	// 		strconv.Itoa(t.Count),
-	// 	}
-	// }
-	// newCSV, err := os.Create("./random_state_data.csv")
-	// if err != nil {
-	// 	log.Println("Error creating new CSV file: ", err)
-	// 	return
-	// }
-	//
-	// w := csv.NewWriter(newCSV)
-	// err = w.Write(header)
-	// if err != nil {
-	// 	log.Println("Error writing header to new CSV file: ", err)
-	// 	return
-	// }
-	// err = w.WriteAll(data)
-	// if err != nil {
-	// 	log.Println("Error writing body to new CSV file: ", err)
-	// 	return
-	// }
+	json.NewEncoder(jf).Encode(stateJson(stateMap))
 }
 
 type State struct {
