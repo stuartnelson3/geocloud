@@ -49,7 +49,7 @@ window.onload = function() {
 
   svg.call(tip);
 
-  d3.json("states.json", function(data) {
+  d3.json("/public/states.json", function(data) {
     data.forEach(function(state) {
       state.tracks.sort(function compare(a, b) {
         if (a.count < b.count) {
@@ -70,6 +70,7 @@ window.onload = function() {
       d3.max(data, function(d) { return d.total_plays; })
     ]);
 
+    var format = d3.format("s");
     d3.select(".legend-container")
     .selectAll(".palette")
     .data([colorScale])
@@ -83,10 +84,10 @@ window.onload = function() {
     .style("background-color", function(d) { return d; })
     .append("text")
     .text(function(d) {
-      return color.invertExtent(d).map(function(n) { return Math.round(n*100)/100; }).join("-");
+      return color.invertExtent(d).map(function(n) { return format(Math.round(n*100)/100); }).join("-");
     })
 
-    d3.json("us-states.json", function(json) {
+    d3.json("/public/us-states.json", function(json) {
 
       for (var i = 0; i < data.length; i++) {
         var dataState = data[i].name;

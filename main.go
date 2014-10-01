@@ -3,11 +3,16 @@ package main
 import (
 	"encoding/csv"
 	"encoding/json"
+	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/gorilla/handlers"
+	"github.com/gorilla/pat"
 )
 
 func querySoundcloud(id, state string, out chan<- Track) {
@@ -93,7 +98,7 @@ func stateJson(stateMap map[string][]Track) []State {
 	return data
 }
 
-func main() {
+func convert() {
 	// http://ip-api.com/json/[ip]
 	// obj["zip"]
 
@@ -135,7 +140,7 @@ func main() {
 	tracks := readOut(out)
 	stateMap := tracksByState(tracks)
 
-	jf, err := os.Create("./states.json")
+	jf, err := os.Create("./public/states.json")
 	if err != nil {
 		log.Println("Error making json file:", err)
 		return
@@ -158,4 +163,28 @@ type Track struct {
 	ArtworkUrl    string `json:"artwork_url"`
 	USState       string `json:"us_state"`
 	Count         int    `json:"count"`
+}
+
+func main() {
+	port := flag.String("port", "8080", "port to listen on")
+	flag.Parse()
+	// set daily timer for convert()
+	m := pat.New()
+	m.Get("/public/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, r.URL.Path[1:])
+	})
+
+	m.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		f, err := os.Open("./main.html")
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+		}
+		defer f.Close()
+		io.Copy(w, f)
+	})
+
+	handler := handlers.LoggingHandler(os.Stdout, m)
+	handler = handlers.CompressHandler(handler)
+	log.Printf("Listening on :%s", *port)
+	log.Fatal(http.ListenAndServe(":"+*port, handler))
 }
