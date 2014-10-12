@@ -168,7 +168,12 @@ type Track struct {
 func main() {
 	port := flag.String("port", "8080", "port to listen on")
 	flag.Parse()
-	// set daily timer for convert()
+	// ticker := time.NewTicker(time.hour * 24)
+	// go func() {
+	//     for t := range ticker.C {
+	// 		convert()
+	//     }
+	// }()
 	m := pat.New()
 	m.Get("/public/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, r.URL.Path[1:])
