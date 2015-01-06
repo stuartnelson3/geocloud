@@ -7,12 +7,12 @@ import (
 
 func TestReadOut(t *testing.T) {
 	var (
-		outc   = make(chan Track)
+		outc   = make(chan *Track)
 		states = []string{"MN", "CA", "NY", "WI"}
 	)
-	go func(c chan Track) {
+	go func(c chan *Track) {
 		for _, state := range states {
-			c <- Track{USState: state}
+			c <- &Track{USState: state}
 		}
 	}(outc)
 	tracks := readOut(outc, time.After(5*time.Millisecond))
@@ -42,7 +42,7 @@ func TestTracksByState(t *testing.T) {
 			{title: "Something", state: "WI"},
 			{title: "Something", state: "WI"},
 		}
-		tracks = make([]Track, len(stateStructs))
+		tracks = make([]*Track, len(stateStructs))
 	)
 	for i, t := range stateStructs {
 		tracks[i] = createTrack(t.title, t.state)
@@ -65,16 +65,21 @@ func TestTracksByState(t *testing.T) {
 		{title: "Something", state: "WI"},
 		{title: "Something", state: "WI"},
 	}
-	tracks = make([]Track, len(stateStructs))
+	tracks = make([]*Track, len(stateStructs))
 	for i, t := range stateStructs {
 		tracks[i] = createTrack(t.title, t.state)
 	}
+
+	expected := map[string]int{"MN": 5, "WI": 3}
+
 	trackMap = tracksByState(tracks)
-	if trackMap["MN"][0].Count != 5 {
-		t.Fatalf("MN: got %d, expected 5", trackMap["MN"][0].Count)
-	}
-	if trackMap["WI"][0].Count != 3 {
-		t.Fatalf("WI: got %d, expected 3", trackMap["WI"][0].Count)
+	for state, trks := range trackMap {
+		if trks[0].Count != expected[state] {
+			t.Fatalf("%s: got %d, expected %d", state, trks[0].Count, expected[state])
+		}
+		if trks[0].USState != state {
+			t.Fatalf("got %s, expected %s", trks[0].USState, state)
+		}
 	}
 }
 
@@ -91,7 +96,7 @@ func TestMakeStates(t *testing.T) {
 			{title: "Something", state: "WI"},
 		}
 		expected = map[string]int{"MN": 5, "WI": 3}
-		tracks   = make([]Track, len(stateStructs))
+		tracks   = make([]*Track, len(stateStructs))
 	)
 	for i, t := range stateStructs {
 		tracks[i] = createTrack(t.title, t.state)
@@ -109,6 +114,6 @@ func TestMakeStates(t *testing.T) {
 	}
 }
 
-func createTrack(title, state string) Track {
-	return Track{Title: title, USState: state}
+func createTrack(title, state string) *Track {
+	return &Track{Title: title, USState: state}
 }

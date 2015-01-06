@@ -15,14 +15,14 @@ import (
 	"github.com/gorilla/pat"
 )
 
-func querySoundcloud(id, state string, outc chan<- Track) {
+func querySoundcloud(id, state string, outc chan<- *Track) {
 	resp, err := http.Get(fmt.Sprintf("http://api.soundcloud.com/tracks/%s.json?client_id=1182e08b0415d770cfb0219e80c839e8", id))
 	if err != nil {
 		log.Printf("Failed to GET %s", id)
 		return
 	}
 	defer resp.Body.Close()
-	t := Track{
+	t := &Track{
 		USState: state,
 	}
 	err = json.NewDecoder(resp.Body).Decode(&t)
@@ -33,14 +33,14 @@ func querySoundcloud(id, state string, outc chan<- Track) {
 	outc <- t
 }
 
-func apiQuerier(rowc chan []string, outc chan Track) {
+func apiQuerier(rowc chan []string, outc chan *Track) {
 	for r := range rowc {
 		querySoundcloud(r[1], r[0], outc)
 	}
 }
 
-func readOut(outc <-chan Track, timeout <-chan time.Time) []Track {
-	tracks := make([]Track, 0)
+func readOut(outc <-chan *Track, timeout <-chan time.Time) []*Track {
+	tracks := make([]*Track, 0)
 	for {
 		select {
 		case t := <-outc:
@@ -51,14 +51,14 @@ func readOut(outc <-chan Track, timeout <-chan time.Time) []Track {
 	}
 }
 
-func tracksByState(tracks []Track) map[string][]Track {
-	stateMap := make(map[string][]Track)
+func tracksByState(tracks []*Track) map[string][]*Track {
+	stateMap := make(map[string][]*Track)
 	for _, t := range tracks {
 		stateMap[t.USState] = append(stateMap[t.USState], t)
 	}
 	// now with the states: sum the occurrence of each track
 	for state, trks := range stateMap {
-		songMap := make(map[string]Track)
+		songMap := make(map[string]*Track)
 		for _, t := range trks {
 			track, prs := songMap[t.Title]
 			if prs {
@@ -69,7 +69,7 @@ func tracksByState(tracks []Track) map[string][]Track {
 				songMap[t.Title] = t
 			}
 		}
-		stateMap[state] = make([]Track, 0)
+		stateMap[state] = make([]*Track, 0)
 		for _, t := range songMap {
 			stateMap[state] = append(stateMap[state], t)
 		}
@@ -77,17 +77,17 @@ func tracksByState(tracks []Track) map[string][]Track {
 	return stateMap
 }
 
-func makeStates(stateMap map[string][]Track) []State {
+func makeStates(stateMap map[string][]*Track) []*State {
 	var (
 		i      int
-		states = make([]State, len(stateMap))
+		states = make([]*State, len(stateMap))
 	)
 	for name, tracks := range stateMap {
 		var sum int
 		for _, t := range tracks {
 			sum += t.Count
 		}
-		states[i] = State{
+		states[i] = &State{
 			Name:       name,
 			TotalPlays: sum,
 			Tracks:     tracks,
@@ -126,7 +126,7 @@ func convert() {
 	}
 
 	rowc := make(chan []string)
-	outc := make(chan Track)
+	outc := make(chan *Track)
 	for i := 0; i < 100; i++ {
 		go apiQuerier(rowc, outc)
 	}
@@ -149,9 +149,9 @@ func convert() {
 }
 
 type State struct {
-	Name       string  `json:"name"`
-	TotalPlays int     `json:"total_plays"`
-	Tracks     []Track `json:"tracks"`
+	Name       string   `json:"name"`
+	TotalPlays int      `json:"total_plays"`
+	Tracks     []*Track `json:"tracks"`
 }
 
 type Track struct {
