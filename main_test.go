@@ -23,29 +23,29 @@ func TestReadOut(t *testing.T) {
 
 func TestTracksByState(t *testing.T) {
 	var (
-		stateStructs = []struct{ name, state string }{
-			{name: "Herp", state: "MN"},
-			{name: "Herp", state: "MN"},
-			{name: "Herp", state: "MN"},
-			{name: "Herp", state: "MN"},
-			{name: "Herp", state: "MN"},
-			{name: "Other", state: "MN"},
-			{name: "Other", state: "MN"},
-			{name: "Other", state: "MN"},
-			{name: "Herp", state: "WI"},
-			{name: "Herp", state: "WI"},
-			{name: "Herp", state: "WI"},
-			{name: "Herp", state: "WI"},
-			{name: "Other", state: "WI"},
-			{name: "Other", state: "WI"},
-			{name: "Something", state: "WI"},
-			{name: "Something", state: "WI"},
-			{name: "Something", state: "WI"},
+		stateStructs = []struct{ title, state string }{
+			{title: "Herp", state: "MN"},
+			{title: "Herp", state: "MN"},
+			{title: "Herp", state: "MN"},
+			{title: "Herp", state: "MN"},
+			{title: "Herp", state: "MN"},
+			{title: "Other", state: "MN"},
+			{title: "Other", state: "MN"},
+			{title: "Other", state: "MN"},
+			{title: "Herp", state: "WI"},
+			{title: "Herp", state: "WI"},
+			{title: "Herp", state: "WI"},
+			{title: "Herp", state: "WI"},
+			{title: "Other", state: "WI"},
+			{title: "Other", state: "WI"},
+			{title: "Something", state: "WI"},
+			{title: "Something", state: "WI"},
+			{title: "Something", state: "WI"},
 		}
 		tracks = make([]Track, len(stateStructs))
 	)
 	for i, t := range stateStructs {
-		tracks[i] = createTrack(t.name, t.state)
+		tracks[i] = createTrack(t.title, t.state)
 	}
 	trackMap := tracksByState(tracks)
 	if len(trackMap["MN"]) != 2 {
@@ -55,19 +55,19 @@ func TestTracksByState(t *testing.T) {
 		t.Fatalf("WI: got %d, expected 3", len(trackMap["WI"]))
 	}
 
-	stateStructs = []struct{ name, state string }{
-		{name: "Herp", state: "MN"},
-		{name: "Herp", state: "MN"},
-		{name: "Herp", state: "MN"},
-		{name: "Herp", state: "MN"},
-		{name: "Herp", state: "MN"},
-		{name: "Something", state: "WI"},
-		{name: "Something", state: "WI"},
-		{name: "Something", state: "WI"},
+	stateStructs = []struct{ title, state string }{
+		{title: "Herp", state: "MN"},
+		{title: "Herp", state: "MN"},
+		{title: "Herp", state: "MN"},
+		{title: "Herp", state: "MN"},
+		{title: "Herp", state: "MN"},
+		{title: "Something", state: "WI"},
+		{title: "Something", state: "WI"},
+		{title: "Something", state: "WI"},
 	}
 	tracks = make([]Track, len(stateStructs))
 	for i, t := range stateStructs {
-		tracks[i] = createTrack(t.name, t.state)
+		tracks[i] = createTrack(t.title, t.state)
 	}
 	trackMap = tracksByState(tracks)
 	if trackMap["MN"][0].Count != 5 {
