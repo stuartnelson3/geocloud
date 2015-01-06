@@ -78,8 +78,10 @@ func tracksByState(tracks []Track) map[string][]Track {
 }
 
 func stateJson(stateMap map[string][]Track) []State {
-	data := make([]State, len(stateMap))
-	var i int
+	var (
+		i    int
+		data = make([]State, len(stateMap))
+	)
 	for name, tracks := range stateMap {
 		var sum int
 		for _, t := range tracks {
