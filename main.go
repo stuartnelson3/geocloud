@@ -15,8 +15,8 @@ import (
 	"github.com/gorilla/pat"
 )
 
-func querySoundcloud(id, state string, outc chan<- *Track) {
-	resp, err := http.Get(fmt.Sprintf("http://api.soundcloud.com/tracks/%s.json?client_id=1182e08b0415d770cfb0219e80c839e8", id))
+func querySoundcloud(id, state, url string, outc chan<- *Track) {
+	resp, err := http.Get(url)
 	if err != nil {
 		log.Printf("Failed to GET %s", id)
 		return
@@ -33,9 +33,14 @@ func querySoundcloud(id, state string, outc chan<- *Track) {
 	outc <- t
 }
 
-func apiQuerier(rowc chan []string, outc chan *Track) {
+func apiQuerier(rowc chan []string, clientID string, outc chan *Track) {
 	for r := range rowc {
-		querySoundcloud(r[1], r[0], outc)
+		var (
+			id    = r[1]
+			state = r[0]
+			url   = fmt.Sprintf("http://api.soundcloud.com/tracks/%s.json?client_id=%s", id, clientID)
+		)
+		querySoundcloud(id, state, url, outc)
 	}
 }
 
@@ -97,13 +102,12 @@ func makeStates(stateMap map[string][]*Track) []*State {
 	return states
 }
 
-func convert() {
+func convert(clientID string) {
 	// http://ip-api.com/json/[ip]
 	// obj["zip"]
 
 	// http://zip.getziptastic.com/v2/US/48867
 	// obj["state"]
-
 	f, err := os.Open("./state_seed.csv")
 	if err != nil {
 		log.Println("Error opening state_seed: ", err)
@@ -128,7 +132,7 @@ func convert() {
 	rowc := make(chan []string)
 	outc := make(chan *Track)
 	for i := 0; i < 100; i++ {
-		go apiQuerier(rowc, outc)
+		go apiQuerier(rowc, clientID, outc)
 	}
 	go func() {
 		for _, row := range body {
@@ -165,14 +169,17 @@ type Track struct {
 }
 
 func main() {
-	port := flag.String("port", "8080", "port to listen on")
+	var (
+		port = flag.String("port", "8080", "port to listen on")
+		// clientID = flag.String("clientID", "1182e08b0415d770cfb0219e80c839e8", "your clientID")
+	)
 	flag.Parse()
-	// ticker := time.NewTicker(time.hour * 24)
-	// go func() {
-	//     for t := range ticker.C {
-	// 		convert()
-	//     }
-	// }()
+	// ticker := time.NewTicker(time.Hour)
+	// go func(cID string) {
+	// 	for range ticker.C {
+	// 		convert(cID)
+	// 	}
+	// }(*clientID)
 	m := pat.New()
 	m.Get("/public/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, r.URL.Path[1:])
