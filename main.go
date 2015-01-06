@@ -15,7 +15,7 @@ import (
 	"github.com/gorilla/pat"
 )
 
-func querySoundcloud(id, state string, out chan<- Track) {
+func querySoundcloud(id, state string, outc chan<- Track) {
 	resp, err := http.Get(fmt.Sprintf("http://api.soundcloud.com/tracks/%s.json?client_id=1182e08b0415d770cfb0219e80c839e8", id))
 	if err != nil {
 		log.Printf("Failed to GET %s", id)
@@ -30,21 +30,20 @@ func querySoundcloud(id, state string, out chan<- Track) {
 		log.Println("Error decoding json: ", err)
 		log.Println("Id:", id)
 	}
-	out <- t
+	outc <- t
 }
 
-func apiQuerier(initialRow chan []string, out chan Track) {
-	for r := range initialRow {
-		querySoundcloud(r[1], r[0], out)
+func apiQuerier(rowc chan []string, outc chan Track) {
+	for r := range rowc {
+		querySoundcloud(r[1], r[0], outc)
 	}
 }
 
-func readOut(out <-chan Track) []Track {
+func readOut(outc <-chan Track, timeout <-chan time.Time) []Track {
 	tracks := make([]Track, 0)
-	timeout := time.After(time.Second * 10)
 	for {
 		select {
-		case t := <-out:
+		case t := <-outc:
 			log.Println("Appending", t.USState)
 			tracks = append(tracks, t)
 		case <-timeout:
@@ -126,18 +125,18 @@ func convert() {
 		return
 	}
 
-	initialRow := make(chan []string)
-	out := make(chan Track)
+	rowc := make(chan []string)
+	outc := make(chan Track)
 	for i := 0; i < 100; i++ {
-		go apiQuerier(initialRow, out)
+		go apiQuerier(rowc, outc)
 	}
 	go func() {
 		for _, row := range body {
-			initialRow <- row
+			rowc <- row
 		}
 	}()
 
-	tracks := readOut(out)
+	tracks := readOut(outc, time.After(time.Second*10))
 	stateMap := tracksByState(tracks)
 
 	jf, err := os.Create("./public/states.json")
