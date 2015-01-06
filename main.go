@@ -44,10 +44,8 @@ func readOut(outc <-chan Track, timeout <-chan time.Time) []Track {
 	for {
 		select {
 		case t := <-outc:
-			log.Println("Appending", t.USState)
 			tracks = append(tracks, t)
 		case <-timeout:
-			log.Println("Timeout, continuing")
 			return tracks
 		}
 	}
