@@ -78,6 +78,37 @@ func TestTracksByState(t *testing.T) {
 	}
 }
 
+func TestMakeStates(t *testing.T) {
+	var (
+		stateStructs = []struct{ title, state string }{
+			{title: "Herp", state: "MN"},
+			{title: "Herp", state: "MN"},
+			{title: "Herp", state: "MN"},
+			{title: "Herp", state: "MN"},
+			{title: "Herp", state: "MN"},
+			{title: "Something", state: "WI"},
+			{title: "Something", state: "WI"},
+			{title: "Something", state: "WI"},
+		}
+		expected = map[string]int{"MN": 5, "WI": 3}
+		tracks   = make([]Track, len(stateStructs))
+	)
+	for i, t := range stateStructs {
+		tracks[i] = createTrack(t.title, t.state)
+	}
+	trackMap := tracksByState(tracks)
+	states := makeStates(trackMap)
+	if len(states) != 2 {
+		t.Fatalf("got %d, expected 2", len(states))
+	}
+
+	for _, state := range states {
+		if expected[state.Name] != state.TotalPlays {
+			t.Fatalf("%s: got %d, expected %d", state.Name, state.TotalPlays, expected[state.Name])
+		}
+	}
+}
+
 func createTrack(title, state string) Track {
 	return Track{Title: title, USState: state}
 }

@@ -77,24 +77,24 @@ func tracksByState(tracks []Track) map[string][]Track {
 	return stateMap
 }
 
-func stateJson(stateMap map[string][]Track) []State {
+func makeStates(stateMap map[string][]Track) []State {
 	var (
-		i    int
-		data = make([]State, len(stateMap))
+		i      int
+		states = make([]State, len(stateMap))
 	)
 	for name, tracks := range stateMap {
 		var sum int
 		for _, t := range tracks {
 			sum += t.Count
 		}
-		data[i] = State{
+		states[i] = State{
 			Name:       name,
 			TotalPlays: sum,
 			Tracks:     tracks,
 		}
 		i++
 	}
-	return data
+	return states
 }
 
 func convert() {
@@ -145,7 +145,7 @@ func convert() {
 		return
 	}
 	defer jf.Close()
-	json.NewEncoder(jf).Encode(stateJson(stateMap))
+	json.NewEncoder(jf).Encode(makeStates(stateMap))
 }
 
 type State struct {
