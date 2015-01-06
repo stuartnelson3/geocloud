@@ -27,8 +27,8 @@ func querySoundcloud(id, state string, outc chan<- *Track) {
 	}
 	err = json.NewDecoder(resp.Body).Decode(&t)
 	if err != nil {
-		log.Println("Error decoding json: ", err)
-		log.Println("Id:", id)
+		log.Printf("Error decoding json for trackID %s: %s", id, err.Error())
+		return
 	}
 	outc <- t
 }
