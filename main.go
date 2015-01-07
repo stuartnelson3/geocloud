@@ -58,25 +58,19 @@ func readOut(outc <-chan *Track, timeout <-chan time.Time) []*Track {
 
 func tracksByState(tracks []*Track) map[string][]*Track {
 	stateMap := make(map[string][]*Track)
-	for _, t := range tracks {
-		stateMap[t.USState] = append(stateMap[t.USState], t)
-	}
-	// now with the states: sum the occurrence of each track
-	for state, trks := range stateMap {
-		songMap := make(map[string]*Track)
+	for _, track := range tracks {
+		var found bool
+		trks := stateMap[track.USState]
 		for _, t := range trks {
-			track, prs := songMap[t.Title]
-			if prs {
-				track.Count++
-				songMap[t.Title] = track
-			} else {
-				t.Count = 1
-				songMap[t.Title] = t
+			if t.ID == track.ID {
+				t.Count++
+				found = true
+				continue
 			}
 		}
-		stateMap[state] = make([]*Track, 0)
-		for _, t := range songMap {
-			stateMap[state] = append(stateMap[state], t)
+		if !found {
+			track.Count = 1
+			stateMap[track.USState] = append(stateMap[track.USState], track)
 		}
 	}
 	return stateMap
@@ -159,7 +153,7 @@ type State struct {
 }
 
 type Track struct {
-	Id            int    `json:"id"`
+	ID            int    `json:"id"`
 	PlaybackCount int    `json:"playback_count"`
 	Title         string `json:"title"`
 	PermalinkUrl  string `json:"permalink_url"`

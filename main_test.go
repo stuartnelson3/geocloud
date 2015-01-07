@@ -23,29 +23,32 @@ func TestReadOut(t *testing.T) {
 
 func TestTracksByState(t *testing.T) {
 	var (
-		stateStructs = []struct{ title, state string }{
-			{title: "Herp", state: "MN"},
-			{title: "Herp", state: "MN"},
-			{title: "Herp", state: "MN"},
-			{title: "Herp", state: "MN"},
-			{title: "Herp", state: "MN"},
-			{title: "Other", state: "MN"},
-			{title: "Other", state: "MN"},
-			{title: "Other", state: "MN"},
-			{title: "Herp", state: "WI"},
-			{title: "Herp", state: "WI"},
-			{title: "Herp", state: "WI"},
-			{title: "Herp", state: "WI"},
-			{title: "Other", state: "WI"},
-			{title: "Other", state: "WI"},
-			{title: "Something", state: "WI"},
-			{title: "Something", state: "WI"},
-			{title: "Something", state: "WI"},
+		stateStructs = []struct {
+			id           int
+			title, state string
+		}{
+			{id: 1, title: "Herp", state: "MN"},
+			{id: 1, title: "Herp", state: "MN"},
+			{id: 1, title: "Herp", state: "MN"},
+			{id: 1, title: "Herp", state: "MN"},
+			{id: 1, title: "Herp", state: "MN"},
+			{id: 2, title: "Other", state: "MN"},
+			{id: 2, title: "Other", state: "MN"},
+			{id: 2, title: "Other", state: "MN"},
+			{id: 1, title: "Herp", state: "WI"},
+			{id: 1, title: "Herp", state: "WI"},
+			{id: 1, title: "Herp", state: "WI"},
+			{id: 1, title: "Herp", state: "WI"},
+			{id: 2, title: "Other", state: "WI"},
+			{id: 2, title: "Other", state: "WI"},
+			{id: 3, title: "Something", state: "WI"},
+			{id: 3, title: "Something", state: "WI"},
+			{id: 3, title: "Something", state: "WI"},
 		}
 		tracks = make([]*Track, len(stateStructs))
 	)
 	for i, t := range stateStructs {
-		tracks[i] = createTrack(t.title, t.state)
+		tracks[i] = createTrack(t.id, t.title, t.state)
 	}
 	trackMap := tracksByState(tracks)
 	if len(trackMap["MN"]) != 2 {
@@ -55,19 +58,22 @@ func TestTracksByState(t *testing.T) {
 		t.Fatalf("WI: got %d, expected 3", len(trackMap["WI"]))
 	}
 
-	stateStructs = []struct{ title, state string }{
-		{title: "Herp", state: "MN"},
-		{title: "Herp", state: "MN"},
-		{title: "Herp", state: "MN"},
-		{title: "Herp", state: "MN"},
-		{title: "Herp", state: "MN"},
-		{title: "Something", state: "WI"},
-		{title: "Something", state: "WI"},
-		{title: "Something", state: "WI"},
+	stateStructs = []struct {
+		id           int
+		title, state string
+	}{
+		{id: 1, title: "Herp", state: "MN"},
+		{id: 1, title: "Herp", state: "MN"},
+		{id: 1, title: "Herp", state: "MN"},
+		{id: 1, title: "Herp", state: "MN"},
+		{id: 1, title: "Herp", state: "MN"},
+		{id: 2, title: "Something", state: "WI"},
+		{id: 2, title: "Something", state: "WI"},
+		{id: 2, title: "Something", state: "WI"},
 	}
 	tracks = make([]*Track, len(stateStructs))
 	for i, t := range stateStructs {
-		tracks[i] = createTrack(t.title, t.state)
+		tracks[i] = createTrack(t.id, t.title, t.state)
 	}
 
 	expected := map[string]int{"MN": 5, "WI": 3}
@@ -85,21 +91,24 @@ func TestTracksByState(t *testing.T) {
 
 func TestMakeStates(t *testing.T) {
 	var (
-		stateStructs = []struct{ title, state string }{
-			{title: "Herp", state: "MN"},
-			{title: "Herp", state: "MN"},
-			{title: "Herp", state: "MN"},
-			{title: "Herp", state: "MN"},
-			{title: "Herp", state: "MN"},
-			{title: "Something", state: "WI"},
-			{title: "Something", state: "WI"},
-			{title: "Something", state: "WI"},
+		stateStructs = []struct {
+			id           int
+			title, state string
+		}{
+			{id: 1, title: "Herp", state: "MN"},
+			{id: 1, title: "Herp", state: "MN"},
+			{id: 1, title: "Herp", state: "MN"},
+			{id: 1, title: "Herp", state: "MN"},
+			{id: 1, title: "Herp", state: "MN"},
+			{id: 2, title: "Something", state: "WI"},
+			{id: 2, title: "Something", state: "WI"},
+			{id: 2, title: "Something", state: "WI"},
 		}
 		expected = map[string]int{"MN": 5, "WI": 3}
 		tracks   = make([]*Track, len(stateStructs))
 	)
 	for i, t := range stateStructs {
-		tracks[i] = createTrack(t.title, t.state)
+		tracks[i] = createTrack(t.id, t.title, t.state)
 	}
 	trackMap := tracksByState(tracks)
 	states := makeStates(trackMap)
@@ -114,6 +123,6 @@ func TestMakeStates(t *testing.T) {
 	}
 }
 
-func createTrack(title, state string) *Track {
-	return &Track{Title: title, USState: state}
+func createTrack(id int, title, state string) *Track {
+	return &Track{ID: id, Title: title, USState: state}
 }
