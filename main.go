@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/csv"
 	"encoding/json"
 	"flag"
@@ -9,7 +10,10 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"runtime"
 	"time"
+
+	_ "github.com/lib/pq"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/pat"
@@ -30,7 +34,13 @@ func querySoundcloud(id, state, url string, outc chan<- *Track) {
 		log.Printf("Error decoding json for trackID %s: %s", id, err.Error())
 		return
 	}
-	outc <- t
+	if t.ID != 0 {
+		// weird behaviour where tracks with id 0 are being returned
+		outc <- t
+	} else {
+		log.Println(t.Title, "has no ID")
+	}
+	<-time.After(50 * time.Millisecond)
 }
 
 func apiQuerier(rowc chan []string, clientID string, outc chan *Track) {
@@ -44,13 +54,17 @@ func apiQuerier(rowc chan []string, clientID string, outc chan *Track) {
 	}
 }
 
-func readOut(outc <-chan *Track, timeout <-chan time.Time) []*Track {
+func readOut(outc <-chan *Track) []*Track {
 	tracks := make([]*Track, 0)
+	var i int
 	for {
 		select {
 		case t := <-outc:
 			tracks = append(tracks, t)
-		case <-timeout:
+			log.Printf("wrote %d tracks", i)
+			i++
+		case <-time.After(5 * time.Second):
+			log.Printf("wrote %d tracks", len(tracks))
 			return tracks
 		}
 	}
@@ -97,11 +111,12 @@ func makeStates(stateMap map[string][]*Track) []*State {
 }
 
 func convert(clientID string) {
-	// http://ip-api.com/json/[ip]
-	// obj["zip"]
+	// need to pull from just country == US
+	// figure by 2 letter state code
+	// have listener_id to do gender/age filtering (maybe)
+	//
 
-	// http://zip.getziptastic.com/v2/US/48867
-	// obj["state"]
+	// Dump from db into this, csv of state,track_id
 	f, err := os.Open("./state_seed.csv")
 	if err != nil {
 		log.Println("Error opening state_seed: ", err)
@@ -125,6 +140,7 @@ func convert(clientID string) {
 
 	rowc := make(chan []string)
 	outc := make(chan *Track)
+	// TODO: Aggregate the ids first to eliminate duplicate API calls.
 	for i := 0; i < 100; i++ {
 		go apiQuerier(rowc, clientID, outc)
 	}
@@ -134,7 +150,7 @@ func convert(clientID string) {
 		}
 	}()
 
-	tracks := readOut(outc, time.After(time.Second*10))
+	tracks := readOut(outc)
 	stateMap := tracksByState(tracks)
 
 	jf, err := os.Create("./public/states.json")
@@ -144,6 +160,45 @@ func convert(clientID string) {
 	}
 	defer jf.Close()
 	json.NewEncoder(jf).Encode(makeStates(stateMap))
+}
+
+func generateSeed(dbs string) {
+	db, err := sql.Open("postgres", dbs)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var (
+		n = 10000000
+		i = 1
+	)
+
+	rows, err := db.Query(`select region, track_id from playduration where country = 'US' and region <> '' limit $1`, n)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	f, err := os.Create("./state-temp.csv")
+	if err != nil {
+		log.Fatal(err)
+	}
+	w := csv.NewWriter(f)
+	w.Write([]string{"state", "track_id"})
+
+	for rows.Next() {
+		d := make([]string, 2)
+		rows.Scan(&d[0], &d[1])
+		w.Write(d)
+		fmt.Printf("Writing record: %d", i)
+		i++
+	}
+	w.Flush()
+	if err = w.Error(); err != nil {
+		log.Fatal(err)
+	}
+
+	f.Close()
+	os.Rename("./state-temp.csv", "./state_seed.csv")
 }
 
 type State struct {
@@ -164,16 +219,38 @@ type Track struct {
 
 func main() {
 	var (
-		port = flag.String("port", "8080", "port to listen on")
-		// clientID = flag.String("clientID", "1182e08b0415d770cfb0219e80c839e8", "your clientID")
+		port     = flag.String("port", "8080", "port to listen on")
+		seed     = flag.Bool("seed", false, "generate seed file and bail")
+		regen    = flag.Bool("regen", false, "regenerate song file hourly")
+		clientID = flag.String("clientID", "", "your clientID")
+		dbs      = flag.String("db", "", "db connection string")
 	)
+	runtime.GOMAXPROCS(runtime.NumCPU())
 	flag.Parse()
-	// ticker := time.NewTicker(time.Hour)
-	// go func(cID string) {
-	// 	for range ticker.C {
-	// 		convert(cID)
-	// 	}
-	// }(*clientID)
+
+	if *regen {
+		// ticker := time.NewTicker(time.Hour)
+		// go func() {
+		// 	for range ticker.C {
+		if *clientID == "" {
+			log.Println("need to set sc client id")
+			os.Exit(1)
+		}
+		convert(*clientID)
+		return
+		// 	}
+		// }()
+	}
+
+	if *seed {
+		if *dbs == "" {
+			log.Println("need to set database connection string")
+			os.Exit(1)
+		}
+		generateSeed(*dbs)
+		return
+	}
+
 	m := pat.New()
 	m.Get("/public/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, r.URL.Path[1:])

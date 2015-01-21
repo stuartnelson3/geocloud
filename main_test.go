@@ -1,9 +1,6 @@
 package main
 
-import (
-	"testing"
-	"time"
-)
+import "testing"
 
 func TestReadOut(t *testing.T) {
 	var (
@@ -15,7 +12,7 @@ func TestReadOut(t *testing.T) {
 			c <- &Track{USState: state}
 		}
 	}(outc)
-	tracks := readOut(outc, time.After(5*time.Millisecond))
+	tracks := readOut(outc)
 	if len(tracks) != len(states) {
 		t.Fatalf("got %d, expected %d", len(tracks), len(states))
 	}
