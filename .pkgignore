@@ -1,0 +1,8 @@
+.git
+.gitignore
+.deps
+.pkgignore
+Makefile
+Procfile
+README.md
+*.go
